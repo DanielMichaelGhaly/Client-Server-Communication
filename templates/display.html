@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client-Server</title>
+    <style>
+        table {
+            width: 60%;
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background-color: red;
+            color: white;
+        }
+        input[type="number"] {
+            padding: 5px;
+            width: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Supervised by Dr Mohamed Ashour and TA Basma</h1>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h3>Set Thresholds</h3>
+        <label for="cpu-threshold-client2">CPU Threshold for Client 2:</label>
+        <input type="number" id="cpu-threshold-client2" min="0" max="100" required>
+        <label for="gpu-threshold-client2">GPU Threshold for Client 2:</label>
+        <input type="number" id="gpu-threshold-client2" min="0" max="100" required>
+        <label for="memory-threshold-client2">Memory Threshold for Client 2:</label>
+        <input type="number" id="memory-threshold-client2" min="0" max="100" required>
+        <br><br>
+
+        <label for="cpu-threshold-client1">CPU Threshold for Client 1:</label>
+        <input type="number" id="cpu-threshold-client1" min="0" max="100" required>
+        <label for="gpu-threshold-client1">GPU Threshold for Client 1:</label>
+        <input type="number" id="gpu-threshold-client1" min="0" max="100" required>
+        <label for="memory-threshold-client1">Memory Threshold for Client 1:</label>
+        <input type="number" id="memory-threshold-client1" min="0" max="100" required>
+        <button onclick="updateThresholds()">Submit Thresholds</button>
+    </div>
+
+    <table>
+    <tr>
+        <th>Client</th>
+        <th>CPU</th>
+        <th>GPU</th>
+        <th>Memory</th>
+    </tr>
+    <tr>
+        <td>Client 1</td>
+        <td id="client1_cpu">0</td>
+        <td id="client1_gpu">0</td>
+        <td id="client1_memory">0</td>
+    </tr>
+    <tr>
+        <td>Client 2</td>
+        <td id="client2_cpu">0</td>
+        <td id="client2_gpu">0</td>
+        <td id="client2_memory">0</td>
+    </tr>
+</table>
+
+    <script>
+        function fetchAndUpdateTable() {
+            fetch('/get_updated_data')
+                .then(response => response.json())
+                .then(data => {
+
+            const client1Cpu = document.getElementById('client1_cpu');
+            const client1Gpu = document.getElementById('client1_gpu');
+            const client1Memory = document.getElementById('client1_memory');
+
+            client1Cpu.textContent = data.client1_data.cpu;
+            client1Gpu.textContent = data.client1_data.gpu;
+            client1Memory.textContent = data.client1_data.memory;
+
+            client1Cpu.className = data.client1_data.cpu > data.thresholds.client1.cpu ? 'highlight' : '';
+            client1Gpu.className = data.client1_data.gpu > data.thresholds.client1.gpu ? 'highlight' : '';
+            client1Memory.className = data.client1_data.memory > data.thresholds.client1.memory ? 'highlight' : '';
+
+            const client2Cpu = document.getElementById('client2_cpu');
+            const client2Gpu = document.getElementById('client2_gpu');
+            const client2Memory = document.getElementById('client2_memory');
+
+            client2Cpu.textContent = data.client2_data.cpu;
+            client2Gpu.textContent = data.client2_data.gpu;
+            client2Memory.textContent = data.client2_data.memory;
+
+            client2Cpu.className = data.client2_data.cpu > data.thresholds.client2.cpu ? 'highlight' : '';
+            client2Gpu.className = data.client2_data.gpu > data.thresholds.client2.gpu ? 'highlight' : '';
+            client2Memory.className = data.client2_data.memory > data.thresholds.client2.memory ? 'highlight' : '';
+
+                    document.getElementById('client1_cpu').textContent = data.client1_data.cpu;
+                    document.getElementById('client1_gpu').textContent = data.client1_data.gpu;
+                    document.getElementById('client1_memory').textContent = data.client1_data.memory;
+
+                    document.getElementById('client2_cpu').textContent = data.client2_data.cpu;
+                    document.getElementById('client2_gpu').textContent = data.client2_data.gpu;
+                    document.getElementById('client2_memory').textContent = data.client2_data.memory;
+
+                    document.getElementById('cpu-threshold-client1').value = data.thresholds.client1.cpu;
+                    document.getElementById('gpu-threshold-client1').value = data.thresholds.client1.gpu;
+                    document.getElementById('memory-threshold-client1').value = data.thresholds.client1.memory;
+
+                    document.getElementById('cpu-threshold-client2').value = data.thresholds.client2.cpu;
+                    document.getElementById('gpu-threshold-client2').value = data.thresholds.client2.gpu;
+                    document.getElementById('memory-threshold-client2').value = data.thresholds.client2.memory;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateThresholds() {
+            const client1Thresholds = {
+                cpu: parseInt(document.getElementById('cpu-threshold-client1').value),
+                gpu: parseInt(document.getElementById('gpu-threshold-client1').value),
+                memory: parseInt(document.getElementById('memory-threshold-client1').value)
+            };
+
+            const client2Thresholds = {
+                cpu: parseInt(document.getElementById('cpu-threshold-client2').value),
+                gpu: parseInt(document.getElementById('gpu-threshold-client2').value),
+                memory: parseInt(document.getElementById('memory-threshold-client2').value)
+            };
+
+            const data = {
+                client1: client1Thresholds,
+                client2: client2Thresholds
+            };
+
+            fetch('/update_thresholds', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Thresholds updated successfully.');
+                } else {
+                    alert('Error updating thresholds.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        setInterval(fetchAndUpdateTable, 10000);
+    </script>
+</body>
+</html>
